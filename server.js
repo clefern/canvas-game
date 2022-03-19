@@ -1,20 +1,21 @@
 import express from "express";
 import http from "http";
-import { Server } from "socket.io";
+import socketio from "socket.io";
 
 // GAME
 import createGame from "./public/game.js";
-const game = createGame();
-// game.start();
 
 // SERVER
 const app = express();
 const server = http.createServer(app);
-const sockets = new Server(server);
+const sockets = socketio(server);
 app.use(express.static("public"));
 
+const game = createGame();
+game.start();
+
 game.subscribe((command) => {
-  console.log("server subscribe", command);
+  console.log(`server ${command.type}`);
   sockets.emit(command.type, command);
 });
 
@@ -26,12 +27,12 @@ sockets.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     game.removePlayer({ playerId });
-    console.log("player disconnected");
-    socket.emit("setup", game.state);
+    console.log("> player disconnected");
   });
   socket.on("move-player", (command) => {
     command.playerId = playerId;
     command.type = "move-player";
+    console.log("> move player on server");
     game.movePlayer(command);
   });
 });

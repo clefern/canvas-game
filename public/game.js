@@ -14,6 +14,7 @@ export default function createGame() {
   }
   function subscribe(observerFunction) {
     observers.push(observerFunction);
+    console.log("> observers", observers);
   }
   function notifyAll(command) {
     for (const observer of observers) {
@@ -46,9 +47,10 @@ export default function createGame() {
     });
   }
   function addFruit(fruit) {
-    const fruitId = fruit?.fruitId
-      ? fruit.fruitId
-      : Math.floor(Math.random() * 1000000);
+    const fruitId =
+      fruit && fruit.fruitId
+        ? fruit.fruitId
+        : Math.floor(Math.random() * 1000000);
     const fruitX = fruit?.fruitX
       ? fruit.fruitX
       : Math.floor(Math.random() * state.screen.width);
@@ -70,10 +72,14 @@ export default function createGame() {
   }
   function removeFruit({ fruitId }) {
     delete state.fruits[fruitId];
+    notifyAll({
+      type: "remove-fruit",
+      fruitId: fruitId,
+    });
   }
   function movePlayer(command) {
     const player = state.players[command.playerId];
-    notifyAll(command);
+
     const acceptedMoves = {
       ArrowUp(player) {
         player.y = Math.max(player.y - 1, 0);
@@ -91,6 +97,7 @@ export default function createGame() {
 
     const moveAction = acceptedMoves[command.keyPressed];
     if (moveAction && player) {
+      notifyAll(command);
       console.log(`> Moving ${command.playerId} with ${command.keyPressed}`);
       moveAction(player);
       checkCollision(player);
